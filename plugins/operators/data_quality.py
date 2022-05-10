@@ -3,7 +3,9 @@ from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
 class DataQualityOperator(BaseOperator):
-
+    """ Operator for testing results of SQL queries against a given answer
+    """
+    
     ui_color = '#89DA59'
 
     @apply_defaults
@@ -28,8 +30,8 @@ class DataQualityOperator(BaseOperator):
         self.log.info('DataQualityOperator not implemented yet')
         
         redshift=PostgresHook(postgres_conn_id=self.redshift_conn_id)
-        self.log.info(f"\nGiven Results: {self.test_answer}")
+        self.log.info(f"\Test Answer: {self.test_answer}")
         query_results = redshift.get_records(self.test_sql)
-        self.log.info(f"\nResults: {query_results}")
+        self.log.info(f"\nQuery Results: {query_results}")
         assert query_results == self.test_answer, f"Test Failed. querry_results: {query_results} != test_answer: {self.test_answer}"
         

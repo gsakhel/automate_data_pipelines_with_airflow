@@ -4,6 +4,11 @@ from airflow.utils.decorators import apply_defaults
 from airflow.contrib.hooks.aws_hook import AwsHook
 
 class StageToRedshiftOperator(BaseOperator):
+    """
+    # Operator for creating tables and load them with data from S3
+    
+    """
+    
     ui_color = '#358140'
     copy_table_sql = """
         COPY {}

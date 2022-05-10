@@ -19,6 +19,7 @@ class LoadFactOperator(BaseOperator):
                  table="",
                  create_table_sql="",
                  table_insert_sql="",
+                 append_only=False,
                  *args, **kwargs):
 
         super(LoadFactOperator, self).__init__(*args, **kwargs)
@@ -32,6 +33,7 @@ class LoadFactOperator(BaseOperator):
         # Do we need both?
         self.create_table_sql=create_table_sql
         self.table_insert_sql=table_insert_sql
+        self.append_only=append_only
 
     def execute(self, context):
         self.log.info('LoadFactOperator implemented')
@@ -39,11 +41,13 @@ class LoadFactOperator(BaseOperator):
         # Are these even necessary?
         #aws_hook = AwsHook(self.aws_credentials_id)
         #credentials = aws_hook.get_credentials()
-
+        
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
-        self.log.info(f"Drop then create table: {self.table}")
-        redshift.run(f"DROP TABLE IF EXISTS public.{self.table}")
-        redshift.run(self.create_table_sql)
+
+        if not append_only:
+            self.log.info(f"Drop then create table: {self.table}")
+            redshift.run(f"DROP TABLE IF EXISTS public.{self.table}")
+            redshift.run(self.create_table_sql)
 
         self.log.info(f"Insert data into table: {self.table}")
         redshift.run(self.table_insert_sql)
