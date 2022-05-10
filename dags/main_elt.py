@@ -21,7 +21,9 @@ default_args = {
 dag = DAG('sparkify_elt',
           default_args=default_args,
           description='Load and transform sparkify data in Redshift with Airflow',
-          schedule_interval='0 * * * *',
+          #schedule_interval='0 * * * *'
+          schedule_interval="@hourly",
+          max_active_runs=1,
           catchup=False
         )
 
@@ -56,37 +58,72 @@ stage_songs_to_redshift = StageToRedshiftOperator(
 load_songplays_table = LoadFactOperator(
     task_id='Load_songplays_fact_table',
     dag=dag,
-    create_table_sql="",
-    table_insert_sql= SqlQueries.songplay_table_insert
+    #aws_credentials_id='aws_credentials',
+    redshift_conn_id='redshift',
+    table='songplays',
+    create_table_sql=SqlQueries.create_songplays_table,
+    table_insert_sql=SqlQueries.songplay_table_insert,
 )
 
 load_user_dimension_table = LoadDimensionOperator(
     task_id='Load_user_dim_table',
-    dag=dag,
-    insert_table_sql=SqlQueries.user_table_insert
+    dag=dag, 
+    redshift_conn_id='redshift',
+    table='users',
+    create_table_sql=SqlQueries.create_users_table,
+    table_insert_sql=SqlQueries.user_table_insert,
+    provide_context=True,
 )
 
 load_song_dimension_table = LoadDimensionOperator(
     task_id='Load_song_dim_table',
     dag=dag,
-    insert_table_sql = SqlQueries.song_table_insert
+    redshift_conn_id='redshift',
+    table='songs',
+    create_table_sql=SqlQueries.create_songs_table,
+    table_insert_sql=SqlQueries.song_table_insert,
 )
 
 load_artist_dimension_table = LoadDimensionOperator(
     task_id='Load_artist_dim_table',
     dag=dag,
-    insert_table_sql = SqlQueries.artist_table_insert
+    redshift_conn_id='redshift',
+    table='artists',
+    create_table_sql=SqlQueries.create_artists_table,
+    table_insert_sql=SqlQueries.artist_table_insert,
 )
 
 load_time_dimension_table = LoadDimensionOperator(
     task_id='Load_time_dim_table',
     dag=dag,
-    insert_table_sql = SqlQueries.time_table_insert
+    redshift_conn_id='redshift',
+    table='time',
+    create_table_sql=SqlQueries.create_time_table,
+    table_insert_sql=SqlQueries.time_table_insert,
 )
 
 run_quality_checks = DataQualityOperator(
     task_id='Run_data_quality_checks',
-    dag=dag
+    dag=dag,
+    redshift_conn_id='redshift',
+    test_sql="SELECT COUNT(*) FROM songplays",
+    test_answer=[(6820,)],
+
 )
 
 end_operator = DummyOperator(task_id='Stop_execution',  dag=dag)
+
+
+start_operator >> stage_events_to_redshift
+start_operator >> stage_songs_to_redshift
+stage_events_to_redshift >> load_songplays_table
+stage_songs_to_redshift >> load_songplays_table
+load_songplays_table >> load_user_dimension_table
+load_songplays_table >> load_song_dimension_table
+load_songplays_table >> load_artist_dimension_table
+load_songplays_table >> load_time_dimension_table
+load_user_dimension_table >> run_quality_checks
+load_song_dimension_table >> run_quality_checks
+load_artist_dimension_table >> run_quality_checks
+load_time_dimension_table >> run_quality_checks
+run_quality_checks >> end_operator
