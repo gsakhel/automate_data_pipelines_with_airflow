@@ -40,7 +40,7 @@ stage_songs_to_redshift = StageToRedshiftOperator(
 load_songplays_table = LoadFactOperator(
     task_id='Load_songplays_fact_table',
     dag=dag,
-    create_table_sql=,
+    create_table_sql="",
     insert_table_sql= SqlQueries.songplay_table_insert
 )
 

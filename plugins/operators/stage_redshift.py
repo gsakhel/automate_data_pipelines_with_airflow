@@ -7,10 +7,10 @@ class StageToRedshiftOperator(BaseOperator):
     ui_color = '#358140'
     copy_table_sql = """
         COPY {}
-        FROM {}
+        FROM '{}'
         ACCESS_KEY_ID '{}'
         SECRET_ACCESS_KEY '{}'
-        JSON {}
+        {}
         REGION '{}'
     """
 
