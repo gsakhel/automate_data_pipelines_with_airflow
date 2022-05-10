@@ -2,7 +2,7 @@ class SqlQueries:
 
 # CREATE TABLES
 
-    create_starting_events = """
+    create_staging_events = """
     CREATE TABLE public.staging_events (
         artist varchar(256),
         auth varchar(256),
