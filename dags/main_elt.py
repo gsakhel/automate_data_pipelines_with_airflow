@@ -29,12 +29,62 @@ start_operator = DummyOperator(task_id='Begin_execution',  dag=dag)
 
 stage_events_to_redshift = StageToRedshiftOperator(
     task_id='Stage_events',
-    dag=dag
+    dag=dag,
+    create_table_sql="""
+    CREATE TABLE public.staging_events (
+        artist varchar(256),
+        auth varchar(256),
+        firstname varchar(256),
+        gender varchar(256),
+        iteminsession int4,
+        lastname varchar(256),
+        length numeric(18,0),
+        "level" varchar(256),
+        location varchar(256),
+        "method" varchar(256),
+        page varchar(256),
+        registration numeric(18,0),
+        sessionid int4,
+        song varchar(256),
+        status int4,
+        ts int8,
+        useragent varchar(256),
+        userid int4
+    );
+    """,
+    provide_context=True,
+    aws_credentials_id='aws_credentials',
+    redshift_conn_id='redshift',
+    table='staging_events',
+    s3_bucket='udacity-dend',
+    s3_key='log_data',
+    json_settings="JSON 's3://udacity-dend/log_json_path.json'"
 )
 
 stage_songs_to_redshift = StageToRedshiftOperator(
     task_id='Stage_songs',
-    dag=dag
+    dag=dag,
+    create_table_sql="""
+    CREATE TABLE public.staging_songs (
+        num_songs int4,
+        artist_id varchar(256),
+        artist_name varchar(256),
+        artist_latitude numeric(18,0),
+        artist_longitude numeric(18,0),
+        artist_location varchar(256),
+        song_id varchar(256),
+        title varchar(256),
+        duration numeric(18,0),
+        "year" int4
+    );
+    """,
+    provide_context=True,
+    aws_credentials_id='aws_credentials',
+    redshift_conn_id='redshift',
+    table='staging_songs',
+    s3_bucket='udacity-dend',
+    s3_key='song_data',
+    json_settings="JSON 'auto'",
 )
 
 load_songplays_table = LoadFactOperator(
