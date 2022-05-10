@@ -1,7 +1,7 @@
 class SqlQueries:
+## CREATE TABLES
 
-# CREATE TABLES
-
+    
     create_staging_events = """
     CREATE TABLE public.staging_events (
         artist varchar(256),
@@ -39,7 +39,6 @@ class SqlQueries:
         "year" int4
     );
     """
-
     create_artists_table = """
     CREATE TABLE public.artists (
         artistid varchar(256) NOT NULL,
@@ -75,6 +74,7 @@ class SqlQueries:
         CONSTRAINT songs_pkey PRIMARY KEY (songid)
     );
     """
+
     create_time_table = """
     CREATE TABLE public."time" (
         start_time timestamp NOT NULL,
@@ -99,9 +99,10 @@ class SqlQueries:
     );
     """
     
-# INSERT TABLES
+## INSERT TABLES
 
     songplay_table_insert = ("""
+    INSERT INTO songplays
         SELECT
                 md5(events.sessionid || events.start_time) songplay_id,
                 events.start_time, 
@@ -122,22 +123,26 @@ class SqlQueries:
     """)
 
     user_table_insert = ("""
+    INSERT INTO users
         SELECT distinct userid, firstname, lastname, gender, level
         FROM staging_events
         WHERE page='NextSong'
     """)
 
     song_table_insert = ("""
+    INSERT INTO songs
         SELECT distinct song_id, title, artist_id, year, duration
         FROM staging_songs
     """)
 
     artist_table_insert = ("""
+    INSERT INTO artists
         SELECT distinct artist_id, artist_name, artist_location, artist_latitude, artist_longitude
         FROM staging_songs
     """)
 
     time_table_insert = ("""
+    INSERT INTO time
         SELECT start_time, extract(hour from start_time), extract(day from start_time), extract(week from start_time), 
                extract(month from start_time), extract(year from start_time), extract(dayofweek from start_time)
         FROM songplays
