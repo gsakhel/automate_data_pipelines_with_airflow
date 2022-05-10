@@ -1,3 +1,6 @@
+[Files]
+connections.sh
+
 [Folders]
 dags/__pycache__/
 plugins/__pycache__/
