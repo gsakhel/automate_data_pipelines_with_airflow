@@ -25,8 +25,10 @@ class StageToRedshiftOperator(BaseOperator):
                  s3_bucket="",
                  s3_key="",
                  create_table_sql="",
-                 json_settings='auto',
+                 json_settings='',
                  region='us-west-2',
+                 #delimiter=",",
+                 #ignore_headers=1,
                  *args, **kwargs):
 
         super(StageToRedshiftOperator, self).__init__(*args, **kwargs)
@@ -41,22 +43,28 @@ class StageToRedshiftOperator(BaseOperator):
         self.create_table_sql=create_table_sql
         self.json_settings=json_settings
         self.region=region
+        #self.delimiter=delimiter
+        #self.ignore_headers=ignore_headers
 
     def execute(self, context):
-        self.log.info('StageToRedshiftOperator not implemented yet')
+        self.log.info('StageToRedshiftOperator still being implemented yet')
         aws_hook = AwsHook(self.aws_credentials_id)
         credentials = aws_hook.get_credentials()
-        redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
-
-        redshift.run(f"DROP TABLE IF EXISTS {self.table}")
-
-        # Might not be needed if table gets created from COPY
+        redshift=PostgresHook(postgres_conn_id=self.redshift_conn_id)
+        
+        self.log.info(f"\n s3_key = {self.s3_key}")
+        rendered_key = self.s3_key.format(**context)
+        self.log.info(f"\n rendered key = {rendered_key}")
+        s3_path = f"s3://{self.s3_bucket}/{rendered_key}"
+        self.log.info(f"\n s3_path = {s3_path}")
+        
+        self.log.info(f"Clearing data from the destination Redshift table: {self.table}")
+        redshift.run(f"DROP TABLE IF EXISTS public.{self.table}")
+        
+        self.log.info(f"Creating table: {self.table} on Redshift")        
         redshift.run(self.create_table_sql)
         
-        rendered_key = self.s3_key.format(**context)
-        s3_path = "s3://{self.s3_bucket}/{rendered_key}"
-        
-        # Or is it formatted_sql= StageToRedshiftOperator.copy_table_sql.......
+        self.log.info(f"Copy data into table: {self.table}")
         formatted_sql = self.copy_table_sql.format(
             self.table,
             s3_path,
@@ -66,28 +74,6 @@ class StageToRedshiftOperator(BaseOperator):
             self.region
         )
         redshift.run(formatted_sql)
-
-
-    # # STAGING TABLES
-    # staging_events_copy = ("""
-    #     COPY staging_events
-    #     FROM {}
-    #     CREDENTIALS 'aws_iam_role={}'
-    #     JSON {}
-    #     region '{}'
-    # """).format(config.get('S3','LOG_DATA'), 
-    #             config.get('IAM_ROLE', 'ARN'), 
-    #             config.get('S3','LOG_JSONPATH'),
-    #             config.get('AWS','REGION')
-    #             )
-
-    # staging_songs_copy = ("""
-    #     COPY staging_songs
-    #     FROM {}
-    #     CREDENTIALS 'aws_iam_role={}'
-    #     JSON 'auto'
-    #     region '{}'
-    # """).format(config.get('S3', 'SONG_DATA'),
-    #             config.get('IAM_ROLE', 'ARN'),
-    #             config.get('AWS', 'REGION')
-    #             )
+        
+        record_count=redshift.get_first(f"SELECT COUNT(*) FROM {self.table}")
+        self.log.info(f"\nrecord_count: {record_count}")
