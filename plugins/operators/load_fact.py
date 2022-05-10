@@ -44,7 +44,7 @@ class LoadFactOperator(BaseOperator):
         
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
 
-        if not append_only:
+        if not self.append_only:
             self.log.info(f"Drop then create table: {self.table}")
             redshift.run(f"DROP TABLE IF EXISTS public.{self.table}")
             redshift.run(self.create_table_sql)
