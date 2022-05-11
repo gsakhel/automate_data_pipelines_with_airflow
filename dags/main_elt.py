@@ -62,7 +62,6 @@ load_songplays_table = LoadFactOperator(
     table='songplays',
     create_table_sql=SqlQueries.create_songplays_table,
     table_insert_sql=SqlQueries.songplay_table_insert,
-    append_only=False,
 )
 
 load_user_dimension_table = LoadDimensionOperator(
@@ -118,7 +117,7 @@ run_quality_checks = DataQualityOperator(
          },
         {'test_sql': "SELECT userid, level, sessionid FROM songplays WHERE playid='d2ecd4f950f2d064e84a57e38f625c6f'",
          'expected_result': [(8,'free',139)]},
-        {'test_sql': "SELECT title, year FROM songs WHERE artistid='ARSW5F51187FB4CFC9' ORDER BY year ASC",
+        {'test_sql': "SELECT title, year FROM songs WHERE artistid='ARSW5F51187FB4CFC9' ORDER BY year, title ASC",
          'expected_result': [('Brother',1992), ('God Smack', 1992), ('Lesson Learned', 2009)]
          }
     ],
