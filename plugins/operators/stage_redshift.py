@@ -52,16 +52,16 @@ class StageToRedshiftOperator(BaseOperator):
         #self.ignore_headers=ignore_headers
 
     def execute(self, context):
-        self.log.info('StageToRedshiftOperator still being implemented yet')
+        self.log.info('StageToRedshiftOperator')
         aws_hook = AwsHook(self.aws_credentials_id)
         credentials = aws_hook.get_credentials()
         redshift=PostgresHook(postgres_conn_id=self.redshift_conn_id)
         
-        self.log.info(f"\n s3_key = {self.s3_key}")
+        self.log.info(f"s3_key = {self.s3_key}")
         rendered_key = self.s3_key.format(**context)
-        self.log.info(f"\n rendered key = {rendered_key}")
+        self.log.info(f"rendered key = {rendered_key}")
         s3_path = f"s3://{self.s3_bucket}/{rendered_key}"
-        self.log.info(f"\n s3_path = {s3_path}")
+        self.log.info(f"s3_path = {s3_path}")
         
         self.log.info(f"Clearing data from the destination Redshift table: {self.table}")
         redshift.run(f"DROP TABLE IF EXISTS public.{self.table}")
@@ -81,4 +81,4 @@ class StageToRedshiftOperator(BaseOperator):
         redshift.run(formatted_sql)
         
         record_count=redshift.get_first(f"SELECT COUNT(*) FROM {self.table}")
-        self.log.info(f"\nrecord_count: {record_count}")
+        self.log.info(f"record_count: {record_count}")

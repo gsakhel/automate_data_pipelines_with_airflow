@@ -18,7 +18,7 @@ default_args = {
     'email_on_retry': False,
 }
 
-dag = DAG('sparkify_elt',
+dag = DAG('sparkify_etl',
           default_args=default_args,
           description='Load and transform sparkify data in Redshift with Airflow',
           #schedule_interval='0 * * * *'
@@ -109,11 +109,27 @@ run_quality_checks = DataQualityOperator(
     task_id='Run_data_quality_checks',
     dag=dag,
     redshift_conn_id='redshift',
-    test_sql="SELECT COUNT(*) FROM songplays",
-    test_answer=[(6820,)],
     checks=[
-        {'test_sql':'SELECT COUNT(*) FROM songplays',
-         'expected_result':[(6820,)]
+        {'test_sql': 'SELECT COUNT(*) FROM songplays',
+         'expected_result': [(6820,)]
+         },
+        {'test_sql': "SELECT name FROM artists WHERE artistid='ARKYKXP11F50C47A6A'",
+         'expected_result': [('The Supersuckers',)]
+         },
+        {'test_sql': "SELECT userid, level, sessionid FROM songplays WHERE playid='d2ecd4f950f2d064e84a57e38f625c6f'",
+         'expected_result': [(8,'free',139)]},
+        {'test_sql': "SELECT title, year FROM songs WHERE artistid='ARSW5F51187FB4CFC9' ORDER BY year ASC",
+         'expected_result': [('Brother',1992), ('God Smack', 1992), ('Lesson Learned', 2009)]
+         }
+    ],
+    comparison_checks=[
+        {'test_sql': 'SELECT COUNT(*) FROM songs',
+         'operator': '>',
+         'inequality': 0
+         },
+        {'test_sql': "SELECT name FROM artists WHERE artistid='ARVNNXD1187B9AE50D'",
+         'operator': '=',
+         'inequality': 'Marvin Gaye'
          },
     ]
 )
