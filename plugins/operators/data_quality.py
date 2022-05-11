@@ -16,6 +16,7 @@ class DataQualityOperator(BaseOperator):
                  redshift_conn_id="",
                  test_sql="",
                  test_answer="",
+                 checks="",
                  *args, **kwargs):
 
         super(DataQualityOperator, self).__init__(*args, **kwargs)
@@ -25,6 +26,7 @@ class DataQualityOperator(BaseOperator):
         self.redshift_conn_id=redshift_conn_id
         self.test_sql=test_sql
         self.test_answer=test_answer
+        self.checks=checks
 
     def execute(self, context):
         self.log.info('DataQualityOperator not implemented yet')
@@ -34,4 +36,9 @@ class DataQualityOperator(BaseOperator):
         query_results = redshift.get_records(self.test_sql)
         self.log.info(f"\nQuery Results: {query_results}")
         assert query_results == self.test_answer, f"Test Failed. querry_results: {query_results} != test_answer: {self.test_answer}"
-        
+                
+        self.log.info("Running checks")
+        for check, e in enumerate(self.checks):
+            self.log.info(f"Running check #{e}")
+            result = redshift.get_records(check['test_sql'])
+            assert result == check['expected_result'], f"Test Failed. result: {result} != expected_result: {check['expected_result']}")
